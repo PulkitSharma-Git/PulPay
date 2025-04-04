@@ -1,11 +1,9 @@
 import mongoose from 'mongoose';
 
-async function main() {
-    await mongoose.connect('mongodb+srv://pulkit:Pulkit%40124@cluster0.0ne5n.mongodb.net/SecondBrain');
-    console.log('Connected to MongoDB');
-}
 
-main().catch(err => console.log(err));
+await mongoose.connect('mongodb+srv://pulkit:Pulkit%40124@cluster0.0ne5n.mongodb.net/SecondBrain');
+console.log('Connected to MongoDB');
+
 
 const userSchema = new mongoose.Schema({
     username: String,

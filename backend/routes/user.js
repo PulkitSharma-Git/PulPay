@@ -1,12 +1,13 @@
 import express from "express";
 import {z} from "zod";
-import { User } from "./../db.js";
+import { UserModel } from "./../db.js";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config.js";
+import authMiddleware from "../middleware.js";
 
 const router = express.Router();
 
-const userSchema = z.object({
+const signUpBody = z.object({
     email: z.string().email(),
     password: z.string().min(6),
     firstName: z.string().min(1),
@@ -16,14 +17,14 @@ const userSchema = z.object({
 router.post("/signup", async (req, res) => {
 
     //Validation using zod
-    const result =  userSchema.safeParse(User);
+    const result =  signUpBody.safeParse(req.body);
     if (!result.success) {
         return res.status(411).json({
             message: "Invalid Inputs"
         })
     }
     
-    const existingUser = await User.findOne({
+    const existingUser = await UserModel.findOne({
         email: req.body.email
     });
 
@@ -42,7 +43,7 @@ router.post("/signup", async (req, res) => {
 
 
     //Db call to save the user
-    const user = User.create(User);
+    const user = UserModel.create(User);
 
     const token = jwt.sign({
         userId: user._id
@@ -56,13 +57,71 @@ router.post("/signup", async (req, res) => {
     })
 })
 
+const signInBody = z.object({
+    email: z.string().email(),
+    password: z.string().min(6)
+})
 
-router.post("signin", (req, res) => {
-    const email = req.body.email;
-    const password  = req.body.password;
+
+router.post("/signin", async (req, res) => {
+    const result  = signInBody.safeParse(req.body);
+
+    if(!result.success) {
+        res.status(411).json({
+            message: "Failed at Validation"
+        })
+    }
+
+    const user = await UserModel.findOne({
+        email: req.body.email,
+        password: req.body.password
+    });
+
+    if(user) {
+        const token = jwt.sign({
+            userId: user._id
+        }, JWT_SECRET)
+
+        res.status(200).json({
+            token: token
+        })
+        return;
+    }
+
+    res.status(411).json({
+        message: "Error while Logging in"
+    })
+})
 
 
+const updateBody = z.object({
+    password: z.string().z.min(6).optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional()
 
+})
+
+router.put("/", authMiddleware, async (req, res) => {
+    const body = updateBody.safeParse(req.body);
+
+    if(!body) {
+        res.status(411).json({
+            message: "Failed at Zod Validation"
+        })
+    }
+
+    await UserModel.updateOne({
+        _id: req.userId
+    }, req.body)
+
+    res.json({
+        message: "Updated Successfully"
+    })
+})
+
+router.get("/bulk", authMiddleware, (req, res) => {
+    
+    
 
 })
 
