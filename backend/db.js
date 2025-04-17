@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 
-
-await mongoose.connect('mongodb+srv://pulkit:Pulkit%40124@cluster0.0ne5n.mongodb.net/SecondBrain');
+await mongoose.connect(); #Add env file
 console.log('Connected to MongoDB');
 
 
